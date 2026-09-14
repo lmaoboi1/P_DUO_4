@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apple Special Event Drop — Studio Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            50: '#fafafd',
+                            100: '#f5f5f7',
+                            200: '#e5e5ea',
+                            300: '#d1d1d6',
+                            400: '#9e9eb0',
+                            500: '#6e6e73',
+                            700: '#3a3a3c',
+                            800: '#1d1d1f',
+                            900: '#000000',
+                            blue: '#0071e3',
+                            blueHover: '#0077ed',
+                            gold: '#bf9b30',
+                            goldLight: '#fef3c7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['SF Mono', 'ui-monospace', 'Menlo', 'Monaco', 'monospace']
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+                        'card': '0 12px 28px -4px rgba(0, 0, 0, 0.06), 0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 20px 35px -5px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.05)',
+                        'modal': '0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0,0,0,0.05)',
+                        'gold-glow': '0 0 35px rgba(245, 158, 11, 0.35)'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts & Leaflet -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        /* Ambient dynamic prism background */
+        #prism-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .ambient-mesh {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            background: 
+                radial-gradient(ellipse 70% 45% at 50% -10%, rgba(219, 234, 254, 0.7) 0%, transparent 70%),
+                radial-gradient(ellipse 55% 40% at 85% 20%, rgba(254, 215, 170, 0.45) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 15% 45%, rgba(233, 213, 255, 0.4) 0%, transparent 60%),
+                radial-gradient(ellipse 65% 50% at 50% 105%, rgba(224, 231, 255, 0.5) 0%, transparent 75%);
+            filter: blur(50px);
+        }
+
+        /* Subtle grid blueprint */
+        .subtle-grid {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+        }
+
+        /* Light Theme Roulette Container */
+        .roulette-viewport {
+            width: 100%;
+            height: 290px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-top: 1px solid rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+            box-shadow: 
+                0 20px 40px -15px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+        }
+
+        @media (min-width: 640px) {
+            .roulette-viewport {
+                height: 310px;
+            }
+        }
+
+        .roulette-track {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            will-change: transform;
+            transition-property: transform;
+            transition-timing-function: cubic-bezier(0.12, 0.88, 0.16, 1);
+        }
+
+        /* Redesigned Minimalist White Cards - Mobile Optimized Width */
+        .case-card {
+            flex: 0 0 162px;
+            height: 242px;
+            margin: 0 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 12px;
+            border-radius: 1.35rem;
+            background: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 640px) {
+            .case-card {
+                flex: 0 0 178px;
+                height: 256px;
+                margin: 0 10px;
+                padding: 16px 14px;
+                border-radius: 1.5rem;
+            }
+        }
+
+        /* Subtle reflective glass highlight */
+        .case-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+
+        /* Color accent bottom bar indicator */
+        .case-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        /* Light-theme rarity borders & badges */
+        .rarity-common { border-color: rgba(203, 213, 225, 0.7); }
+        .rarity-common::after { background: #94a3b8; }
+
+        .rarity-uncommon { 
+            border-color: rgba(56, 189, 248, 0.35); 
+            background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
+        }
+        .rarity-uncommon::after { background: #0284c7; box-shadow: 0 0 10px rgba(2, 132, 199, 0.5); }
+
+        .rarity-rare { 
+            border-color: rgba(168, 85, 247, 0.35); 
+            background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+        }
+        .rarity-rare::after { background: #9333ea; box-shadow: 0 0 10px rgba(147, 51, 234, 0.5); }
+
+        .rarity-epic { 
+            border-color: rgba(249, 115, 22, 0.4); 
+            background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+        }
+        .rarity-epic::after { background: #ea580c; box-shadow: 0 0 10px rgba(234, 88, 12, 0.5); }
+
+        .rarity-legendary {
+            border-color: rgba(245, 158, 11, 0.65);
+            background: linear-gradient(180deg, #ffffff 0%, #fefce8 100%);
+            box-shadow: 0 12px 30px -4px rgba(245, 158, 11, 0.18), 0 2px 6px 0 rgba(0, 0, 0, 0.04);
+        }
+        .rarity-legendary::after {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            box-shadow: 0 0 14px rgba(217, 119, 6, 0.6);
+            height: 4px;
+        }
+
+        /* Winner highlight on roulette finish - no scaling to keep strictly within caliper bounds */
+        .case-card.winner-glow {
+            transform: none;
+            z-index: 30;
+            border-color: #f59e0b;
+            box-shadow: 0 10px 28px -4px rgba(245, 158, 11, 0.35), 0 0 0 1.5px rgba(245, 158, 11, 0.7);
+            background: #ffffff;
+        }
+
+        /* Center Precision Viewfinder Caliper */
+        .center-indicator-lens {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 168px;
+            height: 248px;
+            border-radius: 1.45rem;
+            border: 1.5px solid rgba(0, 113, 227, 0.22);
+            background: rgba(0, 113, 227, 0.015);
+            box-shadow: 
+                0 0 24px rgba(0, 113, 227, 0.08),
+                inset 0 0 20px rgba(0, 113, 227, 0.03),
+                0 10px 30px -5px rgba(0, 0, 0, 0.06);
+            pointer-events: none;
+            z-index: 35;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 640px) {
+            .center-indicator-lens {
+                width: 184px;
+                height: 264px;
+                border-radius: 1.6rem;
+            }
+        }
+
+        /* Precision Industrial Corner Reticles */
+        .caliper-corner {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-color: #0071e3;
+            border-style: solid;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 640px) {
+            .caliper-corner {
+                width: 16px;
+                height: 16px;
+            }
+        }
+        .corner-tl {
+            top: -1px;
+            left: -1px;
+            border-width: 2.5px 0 0 2.5px;
+            border-top-left-radius: 1.45rem;
+        }
+        .corner-tr {
+            top: -1px;
+            right: -1px;
+            border-width: 2.5px 2.5px 0 0;
+            border-top-right-radius: 1.45rem;
+        }
+        .corner-bl {
+            bottom: -1px;
+            left: -1px;
+            border-width: 0 0 2.5px 2.5px;
+            border-bottom-left-radius: 1.45rem;
+        }
+        .corner-br {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 2.5px 2.5px 0;
+            border-bottom-right-radius: 1.45rem;
+        }
+
+        @media (min-width: 640px) {
+            .corner-tl { border-top-left-radius: 1.6rem; }
+            .corner-tr { border-top-right-radius: 1.6rem; }
+            .corner-bl { border-bottom-left-radius: 1.6rem; }
+            .corner-br { border-bottom-right-radius: 1.6rem; }
+        }
+
+        /* Optical Hairline Laser (Softened in Center for Card Legibility) */
+        .center-hairline {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1.5px;
+            background: linear-gradient(
+                180deg, 
+                #0071e3 0%, 
+                rgba(0, 113, 227, 0.7) 12%, 
+                rgba(0, 113, 227, 0.1) 32%, 
+                rgba(0, 113, 227, 0.08) 50%, 
+                rgba(0, 113, 227, 0.1) 68%, 
+                rgba(0, 113, 227, 0.7) 88%, 
+                #0071e3 100%
+            );
+            filter: drop-shadow(0 0 4px rgba(0, 113, 227, 0.45));
+            pointer-events: none;
+            z-index: 38;
+            transition: all 0.3s ease;
+        }
+
+        /* Sculpted Apple Indicator Jewels (Top & Bottom Pointers) */
+        .hairline-pointer {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 15px;
+            background: linear-gradient(180deg, #0071e3 0%, #005bb5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(0, 113, 227, 0.38), 0 0 12px rgba(0, 113, 227, 0.3);
+            z-index: 40;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pointer-top {
+            top: 0;
+            border-radius: 0 0 7px 7px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .pointer-bottom {
+            bottom: 0;
+            border-radius: 7px 7px 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Caliper lock-in pulse effect when snapping into the stroke */
+        .center-indicator-lens.locked-snap {
+            animation: caliperLock 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .center-indicator-lens.locked-snap .caliper-corner {
+            border-color: #f59e0b;
+        }
+
+        .center-hairline.locked-snap {
+            animation: hairlineLock 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .center-hairline.locked-snap .hairline-pointer {
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.65), 0 0 18px rgba(245, 158, 11, 0.45);
+            transform: translateX(-50%);
+        }
+
+        @keyframes caliperLock {
+            0% {
+                border-color: rgba(0, 113, 227, 0.22);
+                box-shadow: 0 0 20px rgba(0, 113, 227, 0.08);
+                transform: translate(-50%, -50%);
+            }
+            35% {
+                border-color: #f59e0b;
+                box-shadow: 0 0 28px rgba(245, 158, 11, 0.4), inset 0 0 15px rgba(245, 158, 11, 0.15);
+                transform: translate(-50%, -50%);
+            }
+            100% {
+                border-color: rgba(245, 158, 11, 0.85);
+                box-shadow: 0 0 22px rgba(245, 158, 11, 0.25), inset 0 0 10px rgba(245, 158, 11, 0.08);
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes hairlineLock {
+            0% {
+                background: linear-gradient(180deg, #0071e3 0%, rgba(0, 113, 227, 0.1) 50%, #0071e3 100%);
+            }
+            40% {
+                background: linear-gradient(180deg, #f59e0b 0%, rgba(245, 158, 11, 0.7) 50%, #f59e0b 100%);
+                filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+            }
+            100% {
+                background: linear-gradient(180deg, #f59e0b 0%, rgba(245, 158, 11, 0.3) 50%, #f59e0b 100%);
+                filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
+            }
+        }
+
+        /* Smooth Light Vignette Fades */
+        .vignette-left {
+            background: linear-gradient(to right, #f5f5f7 0%, rgba(245, 245, 247, 0.92) 40%, rgba(245, 245, 247, 0) 100%);
+        }
+        .vignette-right {
+            background: linear-gradient(to left, #f5f5f7 0%, rgba(245, 245, 247, 0.92) 40%, rgba(245, 245, 247, 0) 100%);
+        }
+
+        /* Custom scrollbar for mobile modal sheet */
+        .modal-scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+        }
+
+        /* Keynote Button (Apple Style) */
+        .btn-apple {
+            background: #0071e3;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            box-shadow: 0 10px 25px -5px rgba(0, 113, 227, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-apple::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: all 0.6s ease;
+        }
+        .btn-apple:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        .btn-apple:hover:not(:disabled) {
+            background: #0077ed;
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px -6px rgba(0, 113, 227, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+        }
+        .btn-apple:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .btn-apple:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Light Voyager Map Integration */
+        .leaflet-container {
+            font-family: inherit;
+            background: #f8fafc !important;
+        }
+        .leaflet-control-zoom {
+            border: 1px solid rgba(0,0,0,0.08) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
+            background-color: #ffffff !important;
+            color: #1d1d1f !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 32px !important;
+        }
+
+        /* Sleek pulse dot */
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .float-smooth {
+            animation: subtleFloat 5s ease-in-out infinite;
+        }
+
+        /* Circular Chronograph Ring Animation */
+        .ring-progress-glow {
+            filter: drop-shadow(0 0 10px rgba(0, 113, 227, 0.45));
+        }
+    </style>
+</head>
+<body class="relative flex flex-col justify-between items-center text-slate-800 min-h-screen min-h-[100dvh]">
+    <!-- Dynamic Prismatic Ambient Lights -->
+    <canvas id="prism-canvas"></canvas>
+    <div class="ambient-mesh"></div>
+    <div class="subtle-grid"></div>
+
+    <!-- Minimalist Apple Keynote Header - Optimized spacing on mobile -->
+    <header class="relative z-10 w-full max-w-6xl px-4 sm:px-6 pt-4 sm:pt-7 pb-2 sm:pb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3 sm:space-x-4">
+            <!-- Original Apple Logo Mark -->
+            <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg?utm_source=ru.wikipedia.org&utm_campaign=index&utm_content=original" 
+                alt="Apple" 
+                class="w-6 h-6 sm:w-7 sm:h-7 object-contain transition-transform duration-200 hover:scale-105"
+                loading="eager"
+            />
+            <div>
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-apple-blue">Keynote Studio Drop</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        LIMITED
+                    </span>
+                </div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                    iPhone Duo Edition
+                </h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-white/80 text-slate-600 border border-slate-200/80 shadow-sm backdrop-blur-md">
+                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Authorized
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Drop Arena -->
+    <main class="relative z-10 w-full flex-1 flex flex-col justify-center items-center py-2 sm:py-6">
+
+        <!-- Light Roulette Viewport -->
+        <div class="relative w-full max-w-7xl px-0 sm:px-4 mb-4 sm:mb-8">
+            <div class="roulette-viewport relative">
+                <!-- Precision Laser Caliper & Hairline -->
+                <div class="center-indicator-lens">
+                    <span class="caliper-corner corner-tl"></span>
+                    <span class="caliper-corner corner-tr"></span>
+                    <span class="caliper-corner corner-bl"></span>
+                    <span class="caliper-corner corner-br"></span>
+                </div>
+
+                <div class="center-hairline">
+                    <div class="hairline-pointer pointer-top">
+                        <svg class="w-2.5 h-2.5 text-white fill-current" viewBox="0 0 24 24">
+                            <path d="M12 17L5 8h14z" />
+                        </svg>
+                    </div>
+                    <div class="hairline-pointer pointer-bottom">
+                        <svg class="w-2.5 h-2.5 text-white fill-current" viewBox="0 0 24 24">
+                            <path d="M12 7l7 9H5z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Scrolling Track for Item Cards -->
+                <div class="roulette-track" id="case-track">
+                    <!-- Cards will be populated dynamically -->
+                </div>
+
+                <!-- Subtle Frosted Edge Masks - narrow on mobile to leave cards legible -->
+                <div class="absolute inset-y-0 left-0 w-8 sm:w-44 vignette-left pointer-events-none z-20"></div>
+                <div class="absolute inset-y-0 right-0 w-8 sm:w-44 vignette-right pointer-events-none z-20"></div>
+            </div>
+        </div>
+
+        <!-- Controls & Spin Action -->
+        <div class="flex flex-col items-center justify-center w-full px-4 gap-2.5 sm:gap-3">
+            <button id="spin-btn" class="btn-apple py-3.5 sm:py-5 px-8 sm:px-20 rounded-2xl text-base sm:text-xl w-full max-w-md uppercase tracking-wider font-extrabold shadow-xl active:scale-[0.98]">
+                Unbox Hardware
+            </button>
+
+            <!-- Small status footer note -->
+            <div class="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-[11px] text-slate-500 font-medium text-center">
+                <span class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500"></span>
+                    Cupertino Stock
+                </span>
+                <span>•</span>
+                <span class="truncate max-w-[200px] sm:max-w-none">iPhone Duo 256GB Night Sky</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Redesigned Light Modal for Unboxing Results & Dispatch - Mobile Scrollable Sheet -->
+    <div id="result-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-md hidden items-end sm:items-center justify-center z-50 opacity-0 transition-opacity duration-300 p-0 sm:p-4">
+        <div class="bg-white/98 sm:bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-t-[2rem] sm:rounded-[2.25rem] p-5 sm:p-8 max-w-lg w-full max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto modal-scroll-container transform translate-y-4 sm:translate-y-0 scale-95 transition-all duration-300 shadow-modal relative" id="modal-box">
+            
+            <!-- Mobile Swipe Bar Handle -->
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-3 sm:hidden"></div>
+
+            <!-- Soft luxury ambient lights behind content -->
+            <div class="absolute -top-20 -right-20 w-60 h-60 bg-amber-200/40 rounded-full blur-[80px] pointer-events-none"></div>
+            <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-sky-200/40 rounded-full blur-[80px] pointer-events-none"></div>
+
+            <!-- View 1: Winner Spotlight Showcase -->
+            <div id="step-winner" class="text-center relative z-10">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-widest uppercase bg-amber-100 text-amber-800 border border-amber-300 mb-2 sm:mb-3 shadow-sm">
+                    ★ FACTORY ALLOCATION SECURED ★
+                </div>
+                
+                <h2 class="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Hardware Unlocked</h2>
+                <div class="w-10 sm:w-12 h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto rounded-full mt-1.5 sm:mt-2 mb-2 sm:mb-3"></div>
+                
+                <!-- Pristine Presentation Stage -->
+                <div class="relative flex justify-center items-center my-2 sm:my-3 h-52 sm:h-72 bg-gradient-to-b from-slate-50 to-slate-100/70 rounded-2xl border border-slate-200/60 overflow-hidden shadow-inner">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(245,158,11,0.12),transparent_70%)]"></div>
+                    <div id="winner-display-container" class="relative z-10 w-full h-full flex flex-col items-center justify-center p-2">
+                        <!-- Injected by script -->
+                    </div>
+                </div>
+                
+                <h3 id="winner-title" class="text-lg sm:text-2xl font-black text-slate-900 mb-0.5"></h3>
+                <p id="winner-sub" class="text-[11px] sm:text-xs text-slate-500 mb-4 sm:mb-6 font-mono font-medium tracking-wide">256GB DUAL OLED • UNLOCKED IMEI</p>
+
+                <button id="claim-drop-btn" class="w-full py-3.5 sm:py-4 px-6 rounded-2xl font-black text-white uppercase tracking-wider bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 shadow-[0_10px_25px_-5px_rgba(245,158,11,0.5)] transition-all active:scale-[0.98] text-xs sm:text-base">
+                    Claim Device & Pin Coordinates
+                </button>
+            </div>
+
+            <!-- View 2: Pin Delivery Location on Crisp Light Map -->
+            <div id="step-location" class="text-center relative z-10 hidden">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-widest uppercase bg-sky-100 text-sky-700 border border-sky-200 mb-2">
+                    Step 2 of 2
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Select Drop Zone</h2>
+                <p class="text-slate-500 text-[11px] sm:text-xs mb-3">Tap on the satellite map to lock in your GPS delivery coordinates.</p>
+                
+                <div id="delivery-map" class="w-full h-52 sm:h-72 bg-slate-100 rounded-2xl mb-3 overflow-hidden border border-slate-200 shadow-inner"></div>
+                
+                <div id="coords-display" class="text-[10px] sm:text-[11px] font-mono text-slate-600 mb-3 bg-slate-50 py-2 px-3 rounded-xl border border-slate-200">
+                    Tap anywhere on the map to pinpoint delivery destination
+                </div>
+
+                <button id="confirm-dispatch-btn" disabled class="w-full py-3.5 sm:py-4 px-6 rounded-xl font-bold uppercase tracking-wider text-white bg-slate-300 disabled:cursor-not-allowed transition shadow-sm text-xs sm:text-sm active:scale-[0.98]">
+                    Confirm Transit Protocol
+                </button>
+            </div>
+
+            <!-- View 3: Final Dispatch Confirmation & Countdown with Unique Chronograph Ring -->
+            <div id="step-success" class="text-center relative z-10 hidden flex flex-col items-center py-1">
+                
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/80 mb-3 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    Transit Protocol Armed
+                </div>
+
+                <h2 class="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-1">
+                    Express Dispatch Scheduled
+                </h2>
+                <p class="text-slate-500 text-xs sm:text-sm mb-4 max-w-sm">
+                    Your allocation has been verified. Courier transport is primed for route execution.
+                </p>
+
+                <!-- Unique Apple Chronograph Countdown Ring - Scaled for Mobile -->
+                <div class="relative w-44 h-44 sm:w-60 sm:h-60 flex items-center justify-center my-1">
+                    <svg class="w-full h-full -rotate-90 transform" viewBox="0 0 200 200">
+                        <defs>
+                            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0071e3" />
+                                <stop offset="50%" stop-color="#38bdf8" />
+                                <stop offset="100%" stop-color="#0284c7" />
+                            </linearGradient>
+                            <filter id="ringShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0071e3" flood-opacity="0.3" />
+                            </filter>
+                        </defs>
+                        
+                        <!-- Track Background -->
+                        <circle cx="100" cy="100" r="84" stroke="rgba(226, 232, 240, 0.85)" stroke-width="9" fill="none" />
+                        
+                        <!-- Dial Ticks -->
+                        <circle cx="100" cy="100" r="74" stroke="rgba(203, 213, 225, 0.5)" stroke-width="1.5" stroke-dasharray="2 6" fill="none" />
+
+                        <!-- Active Chrono Progress Ring -->
+                        <circle 
+                            id="countdown-ring-circle" 
+                            cx="100" 
+                            cy="100" 
+                            r="84" 
+                            stroke="url(#ringGrad)" 
+                            stroke-width="9" 
+                            stroke-linecap="round" 
+                            stroke-dasharray="527.79" 
+                            stroke-dashoffset="0" 
+                            fill="none" 
+                            filter="url(#ringShadow)"
+                            class="transition-[stroke-dashoffset] duration-1000 ease-linear"
+                        />
+                    </svg>
+
+                    <!-- Center Dial Telemetry -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Estimated Transit</span>
+                        <div id="countdown-timer" class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight font-mono">
+                            23:59:59
+                        </div>
+                        <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] font-bold text-apple-blue tracking-wide uppercase">
+                            <span>HRS</span>
+                            <span>:</span>
+                            <span>MIN</span>
+                            <span>:</span>
+                            <span>SEC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Courier Tracking Card -->
+                <div class="w-full bg-slate-50/90 border border-slate-200/80 rounded-2xl p-3 sm:p-3.5 mb-4 mt-2 flex items-center justify-between text-left shadow-sm">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center text-apple-blue shadow-xs">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tracking Manifest</p>
+                            <p class="text-[11px] sm:text-xs font-mono font-bold text-slate-800">APL-DUO-7729-SKY</p>
+                        </div>
+                    </div>
+                    <span class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        Priority Air
+                    </span>
+                </div>
+
+                <button id="reset-sim-btn" class="w-full py-3 sm:py-3.5 px-6 rounded-xl font-bold uppercase tracking-wider text-slate-700 bg-slate-100 hover:bg-slate-200 transition text-xs active:scale-[0.98]">
+                    Spin Another Drop
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* Product catalog with iPhone Duo Night Sky as the max reward */
+        const INVENTORY = [
+            {
+                id: 'duo_night_sky',
+                name: 'iPhone Duo 256GB Night Sky',
+                image: 'https://cdn.ya.ua/uploads/variations/iphone-duo-256gb-night-sky1.webp',
+                rarity: 'legendary',
+                badgeText: '★ APEX REWARD',
+                accentColor: 'text-amber-600',
+                badgeBg: 'bg-amber-100 text-amber-800 border-amber-300',
+                chance: 1, // 1% Apex reward
+                spec: 'Dual Horizon OLED • Night Sky'
+            },
+            {
+                id: 'iphone_17_pro_max_orange',
+                name: 'iPhone 17 Pro Max Cosmic Orange',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-17-pro-max-512-gb-cosmic-orange-mfyt41.webp',
+                rarity: 'epic',
+                badgeText: 'EPIC REWARD',
+                accentColor: 'text-orange-600',
+                badgeBg: 'bg-orange-100 text-orange-800 border-orange-200',
+                chance: 5,
+                spec: 'Cosmic Orange Titanium'
+            },
+            {
+                id: 'iphone_17_air',
+                name: 'iPhone Air Space Black',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-17-air-256gb-space-black-now1.webp',
+                rarity: 'epic',
+                badgeText: 'EPIC REWARD',
+                accentColor: 'text-purple-600',
+                badgeBg: 'bg-purple-100 text-purple-800 border-purple-200',
+                chance: 5,
+                spec: 'Ultra-slim Titanium'
+            },
+            {
+                id: 'iphone_17_pro_max_silver',
+                name: 'iPhone 17 Pro Max Silver',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-17-pro-max-256-gb-silver4.webp',
+                rarity: 'rare',
+                badgeText: 'RARE',
+                accentColor: 'text-indigo-600',
+                badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                chance: 9,
+                spec: 'Triple Camera Array'
+            },
+            {
+                id: 'iphone_16_pro_max_desert',
+                name: 'iPhone 16 Pro Max Desert',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-16-pro-max-512gb-desert-titanium-ua1.png',
+                rarity: 'uncommon',
+                badgeText: 'UNCOMMON',
+                accentColor: 'text-sky-600',
+                badgeBg: 'bg-sky-50 text-sky-700 border-sky-200',
+                chance: 15,
+                spec: 'Desert Titanium Body'
+            },
+            {
+                id: 'iphone_16_plus_white',
+                name: 'iPhone 16 Plus White',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-16-plus-256gb-white-e-sim1.webp',
+                rarity: 'common',
+                badgeText: 'COMMON',
+                accentColor: 'text-slate-600',
+                badgeBg: 'bg-slate-100 text-slate-700 border-slate-200',
+                chance: 30,
+                spec: 'Ceramic Shield White'
+            },
+            {
+                id: 'iphone_16_teal',
+                name: 'iPhone 16 Teal',
+                image: 'https://ya-ua.fra1.digitaloceanspaces.com/uploads/previews/iphone-16-128gb-teal-myed3-ua1.png',
+                rarity: 'common',
+                badgeText: 'COMMON',
+                accentColor: 'text-slate-600',
+                badgeBg: 'bg-slate-100 text-slate-700 border-slate-200',
+                chance: 35,
+                spec: 'Dynamic Island Teal'
+            }
+        ];
+
+        /* Responsive Geometry & Layout calculation */
+        function getItemStride() {
+            // Responsive card stride (width + total horizontal margin)
+            return window.innerWidth < 640 ? (162 + 16) : (178 + 20); // 178px on mobile, 198px on tablet/desktop
+        }
+
+        const TOTAL_SLOTS = 100;
+
+        const caseTrack = document.getElementById('case-track');
+        const spinBtn = document.getElementById('spin-btn');
+        
+        const resultModal = document.getElementById('result-modal');
+        const modalBox = document.getElementById('modal-box');
+        const stepWinner = document.getElementById('step-winner');
+        const stepLocation = document.getElementById('step-location');
+        const stepSuccess = document.getElementById('step-success');
+        
+        const winnerContainer = document.getElementById('winner-display-container');
+        const winnerTitle = document.getElementById('winner-title');
+        const winnerSub = document.getElementById('winner-sub');
+        const claimDropBtn = document.getElementById('claim-drop-btn');
+        const confirmDispatchBtn = document.getElementById('confirm-dispatch-btn');
+        const coordsDisplay = document.getElementById('coords-display');
+        const resetSimBtn = document.getElementById('reset-sim-btn');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const countdownRingCircle = document.getElementById('countdown-ring-circle');
+
+        /* State Variables */
+        let isSpinning = false;
+        let leafletMap = null;
+        let selectedLocationMarker = null;
+        let countdownTimerId = null;
+        let currentWinningIndex = null;
+
+        const canvas = document.getElementById('prism-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            const count = Math.floor((canvas.width * canvas.height) / 14000);
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2 + 1,
+                    alpha: Math.random() * 0.4 + 0.15,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    color: ['#93c5fd', '#fed7aa', '#ddd6fe', '#cbd5e1'][Math.floor(Math.random() * 4)]
+                });
+            }
+        }
+
+        // Re-center track on orientation change / window resize if already spun
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (!isSpinning && currentWinningIndex !== null && caseTrack.children.length > 0) {
+                const viewport = document.querySelector('.roulette-viewport');
+                if (!viewport) return;
+                const viewportWidth = viewport.offsetWidth;
+                const centerPoint = viewportWidth / 2;
+                const stride = getItemStride();
+                const exactCenterPosition = (currentWinningIndex * stride) - centerPoint + (stride / 2);
+                caseTrack.style.transition = 'none';
+                caseTrack.style.transform = `translateX(-${exactCenterPosition}px)`;
+            }
+        });
+
+        function drawPrismParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+            requestAnimationFrame(drawPrismParticles);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        requestAnimationFrame(drawPrismParticles);
+
+        function getRandomItem() {
+            const rand = Math.random() * 100;
+            let cumulative = 0;
+            for (const item of INVENTORY) {
+                cumulative += item.chance;
+                if (rand <= cumulative) {
+                    return item;
+                }
+            }
+            return INVENTORY[0];
+        }
+
+        function buildItemElement(item) {
+            const el = document.createElement('div');
+            el.className = `case-card rarity-${item.rarity}`;
+            
+            const isLegendary = item.rarity === 'legendary';
+            
+            el.innerHTML = `
+                <div class="w-full flex justify-between items-center relative z-10">
+                    <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${item.badgeBg}">
+                        ${item.badgeText}
+                    </span>
+                    ${isLegendary ? '<span class="text-amber-500 font-bold text-xs animate-bounce">✦</span>' : ''}
+                </div>
+                
+                <div class="w-full h-32 sm:h-36 flex justify-center items-center relative z-10 my-1 group">
+                    <img src="${item.image}" alt="${item.name}" loading="lazy" class="max-h-full max-w-full object-contain filter drop-shadow-[0_10px_14px_rgba(0,0,0,0.12)] transition-transform duration-300 group-hover:scale-105" onerror="this.src='https://placehold.co/120x150/f1f5f9/0f172a?text=iPhone'">
+                </div>
+
+                <div class="w-full text-center relative z-10 pt-1">
+                    <div class="font-bold text-xs truncate px-1 text-slate-900" title="${item.name}">${item.name}</div>
+                    <div class="text-[10px] text-slate-500 font-medium tracking-wide truncate mt-0.5">${item.spec}</div>
+                </div>
+            `;
+            return el;
+        }
+
+        function populateTrack() {
+            caseTrack.innerHTML = '';
+            caseTrack.style.transition = 'none';
+            caseTrack.style.transform = 'translateX(0px)';
+            currentWinningIndex = null;
+
+            for (let i = 0; i < TOTAL_SLOTS; i++) {
+                const item = getRandomItem();
+                const node = buildItemElement(item);
+                caseTrack.appendChild(node);
+            }
+        }
+
+        function triggerSpin() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+            spinBtn.innerHTML = `
+                <span class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-base">
+                    <svg class="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>ALLOCATING HARDWARE...</span>
+                </span>
+            `;
+
+            // Reset any previous lock indicator effects
+            const lens = document.querySelector('.center-indicator-lens');
+            const hairline = document.querySelector('.center-hairline');
+            if (lens) lens.classList.remove('locked-snap');
+            if (hairline) hairline.classList.remove('locked-snap');
+
+            populateTrack();
+
+            // Winning index in target run-off zone
+            const winningIndex = Math.floor(Math.random() * 10) + 75;
+            currentWinningIndex = winningIndex;
+            const guaranteedWinner = INVENTORY.find(item => item.id === 'duo_night_sky');
+            
+            // Inject guaranteed flagship
+            const targetNode = caseTrack.children[winningIndex];
+            const winnerNode = buildItemElement(guaranteedWinner);
+            caseTrack.replaceChild(winnerNode, targetNode);
+
+            // Calculate geometry using responsive stride
+            const stride = getItemStride();
+            const viewportWidth = document.querySelector('.roulette-viewport').offsetWidth;
+            const centerPoint = viewportWidth / 2;
+
+            // The dead-center target where the card is aligned perfectly with the caliper stroke
+            const exactCenterPosition = (winningIndex * stride) - centerPoint + (stride / 2);
+
+            // Phase 1: Natural coast-down that stops slightly off-center (offset by 28-44px)
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            const coastOffset = direction * (Math.floor(Math.random() * 16) + 28);
+            const initialStopPosition = exactCenterPosition + coastOffset;
+
+            const initialSpinDuration = 6600;
+
+            // Phase 1: High speed roll and deceleration
+            caseTrack.style.transition = `transform ${initialSpinDuration}ms cubic-bezier(0.12, 0.88, 0.16, 1)`;
+
+            requestAnimationFrame(() => {
+                caseTrack.style.transform = `translateX(-${initialStopPosition}px)`;
+            });
+
+            // Phase 2: Smooth cinematic adjustment into the stroke
+            setTimeout(() => {
+                const adjustDuration = 950;
+                caseTrack.style.transition = `transform ${adjustDuration}ms cubic-bezier(0.25, 1, 0.35, 1)`;
+                caseTrack.style.transform = `translateX(-${exactCenterPosition}px)`;
+
+                // Trigger caliper lens magnetic lock flash as it centers
+                setTimeout(() => {
+                    if (lens) lens.classList.add('locked-snap');
+                    if (hairline) hairline.classList.add('locked-snap');
+                }, 150);
+
+                // Reveal results after micro-adjustment completes
+                setTimeout(() => {
+                    revealResult(guaranteedWinner, winnerNode);
+                }, adjustDuration + 400);
+
+            }, initialSpinDuration + 150);
+        }
+
+        function revealResult(winner, node) {
+            node.classList.add('winner-glow');
+
+            setTimeout(() => {
+                winnerContainer.innerHTML = `
+                    <div class="relative flex flex-col items-center">
+                        <img src="${winner.image}" alt="${winner.name}" class="h-36 sm:h-52 object-contain filter drop-shadow-[0_20px_25px_rgba(245,158,11,0.3)] float-smooth" onerror="this.src='https://placehold.co/180x220/f8fafc/0f172a?text=iPhone+Duo'">
+                    </div>
+                `;
+
+                winnerTitle.textContent = winner.name;
+                winnerSub.textContent = `${winner.spec} • SERIAL SECURED`;
+
+                resultModal.classList.remove('hidden');
+                resultModal.classList.add('flex');
+                void resultModal.offsetWidth;
+
+                resultModal.classList.remove('opacity-0');
+                modalBox.classList.remove('scale-95', 'translate-y-4');
+                modalBox.classList.add('scale-100', 'translate-y-0');
+
+                stepWinner.classList.remove('hidden');
+                stepLocation.classList.add('hidden');
+                stepSuccess.classList.add('hidden');
+
+                launchConfettiCelebration();
+
+                isSpinning = false;
+                spinBtn.disabled = false;
+                spinBtn.textContent = 'UNBOX HARDWARE';
+            }, 800);
+        }
+
+        function launchConfettiCelebration() {
+            const end = Date.now() + 2000;
+            const colors = ['#f59e0b', '#0071e3', '#38bdf8', '#fbbf24', '#e2e8f0'];
+
+            (function frame() {
+                confetti({
+                    particleCount: 4,
+                    angle: 60,
+                    spread: 50,
+                    origin: { x: 0, y: 0.65 },
+                    colors: colors
+                });
+                confetti({
+                    particleCount: 4,
+                    angle: 120,
+                    spread: 50,
+                    origin: { x: 1, y: 0.65 },
+                    colors: colors
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            })();
+        }
+
+        function setupLeafletMap() {
+            setTimeout(() => {
+                if (!leafletMap) {
+                    // Apple Park, Cupertino center coordinates
+                    leafletMap = L.map('delivery-map', {
+                        zoomControl: true,
+                        tap: false
+                    }).setView([37.3346, -122.0090], 13);
+
+                    // Voyager Light clean map tiles
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap &copy; CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 19
+                    }).addTo(leafletMap);
+
+                    leafletMap.on('click', (e) => {
+                        const { lat, lng } = e.latlng;
+                        if (selectedLocationMarker) {
+                            selectedLocationMarker.setLatLng(e.latlng);
+                        } else {
+                            const customIcon = L.divIcon({
+                                className: 'custom-pin',
+                                html: `
+                                    <div style="width:22px;height:22px;background:#0071e3;border:3px solid #ffffff;border-radius:50%;box-shadow:0 3px 10px rgba(0,113,227,0.5);"></div>
+                                `,
+                                iconSize: [22, 22],
+                                iconAnchor: [11, 11]
+                            });
+                            selectedLocationMarker = L.marker(e.latlng, { icon: customIcon }).addTo(leafletMap);
+                        }
+
+                        const latHemisphere = lat >= 0 ? '°N' : '°S';
+                        const lngHemisphere = lng >= 0 ? '°E' : '°W';
+                        coordsDisplay.innerHTML = `<span class="text-emerald-600 font-bold">✓ Locked:</span> ${Math.abs(lat).toFixed(4)}${latHemisphere}, ${Math.abs(lng).toFixed(4)}${lngHemisphere}`;
+                        
+                        confirmDispatchBtn.disabled = false;
+                        confirmDispatchBtn.classList.remove('bg-slate-300');
+                        confirmDispatchBtn.classList.add('bg-apple-blue', 'hover:bg-apple-blueHover', 'shadow-md');
+                    });
+                } else {
+                    leafletMap.invalidateSize();
+                }
+            }, 180);
+        }
+
+        function startCountdown() {
+            const totalDuration = 24 * 3600;
+            let secondsLeft = 23 * 3600 + 59 * 60 + 59;
+            const circumference = 2 * Math.PI * 84; // ~527.79
+
+            if (countdownTimerId) clearInterval(countdownTimerId);
+
+            function updateTime() {
+                const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+                const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+                const s = String(secondsLeft % 60).padStart(2, '0');
+                countdownTimer.textContent = `${h}:${m}:${s}`;
+
+                if (countdownRingCircle) {
+                    const elapsed = totalDuration - secondsLeft;
+                    const offset = (elapsed / totalDuration) * circumference;
+                    countdownRingCircle.style.strokeDashoffset = offset;
+                }
+
+                if (secondsLeft > 0) {
+                    secondsLeft--;
+                } else {
+                    clearInterval(countdownTimerId);
+                }
+            }
+
+            updateTime();
+            countdownTimerId = setInterval(updateTime, 1000);
+        }
+
+        claimDropBtn.addEventListener('click', () => {
+            stepWinner.classList.add('hidden');
+            stepLocation.classList.remove('hidden');
+            setupLeafletMap();
+        });
+
+        confirmDispatchBtn.addEventListener('click', () => {
+            stepLocation.classList.add('hidden');
+            stepSuccess.classList.remove('hidden');
+            startCountdown();
+            launchConfettiCelebration();
+        });
+
+        resetSimBtn.addEventListener('click', () => {
+            resultModal.classList.add('opacity-0');
+            modalBox.classList.remove('scale-100', 'translate-y-0');
+            modalBox.classList.add('scale-95', 'translate-y-4');
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+                resultModal.classList.remove('flex');
+                populateTrack();
+            }, 300);
+        });
+
+        spinBtn.addEventListener('click', triggerSpin);
+
+        /* Initial track build on boot */
+        populateTrack();
+    </script>
+</body>
+</html>
